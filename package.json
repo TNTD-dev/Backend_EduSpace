@@ -1,0 +1,38 @@
+{
+  "name": "back_end",
+  "version": "1.0.0",
+  "description": "back end server",
+  "main": "/src/server.js",
+  "scripts": {
+    "start": "nodemon --exec babel-node src/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "H",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "crypto": "^1.0.1",
+    "dotenv": "^16.5.0",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "express-session": "^1.18.1",
+    "googleapis": "^148.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "madge": "^8.0.0",
+    "multer": "^2.0.0",
+    "mysql2": "^3.14.1",
+    "passport": "^0.7.0",
+    "passport-facebook": "^3.0.0",
+    "passport-google-oauth20": "^2.0.0",
+    "sequelize": "^6.37.7"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.26.10",
+    "@babel/node": "^7.26.0",
+    "@babel/preset-env": "^7.26.9",
+    "nodemon": "^3.1.10",
+    "sequelize-cli": "^6.6.2"
+  }
+}
