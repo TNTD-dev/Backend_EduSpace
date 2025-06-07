@@ -456,6 +456,7 @@ class CourseEnrollmentControllers {
               "title",
               "category",
               "categoryColor",
+              "instructorName",
               "image",
               "description",
               "status",

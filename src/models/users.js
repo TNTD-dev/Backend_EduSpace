@@ -64,8 +64,7 @@ module.exports = (sequelize, DataTypes) => {
       resetTokenExpired: DataTypes.DATE,
       role: {
         type: DataTypes.ENUM("student", "teacher", "admin"),
-        defaultValue: "student",
-        allowNull: false,
+        allowNull: true,
       },
       phone: {
         type: DataTypes.STRING,

@@ -1,7 +1,7 @@
 const db = require("../models/index");
 const hashedPasswordService = require("./hashedPasswordService");
 
-const createNewUser = async (firstname, lastname, email, password, role) => {
+const createNewUser = async (firstname, lastname, email, password) => {
   try {
     const hashedPassword = hashedPasswordService(password);
     console.log("Hashed password: ", hashedPassword);
@@ -10,7 +10,7 @@ const createNewUser = async (firstname, lastname, email, password, role) => {
       lastName: lastname,
       email: email,
       password: hashedPassword,
-      role: role,
+      role: null,
     });
     return newUser;
   } catch (err) {

@@ -28,31 +28,53 @@ class AuthControllers {
   };
 
   registerController = async (req, res) => {
-    console.log(req.body);
-    const { firstname, lastname, email, password, role } = req.body;
-    // check if one value is empty
-    if (!firstname || !lastname || !email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "All fields are mandatory",
-      });
-    }
+    try {
+      const { firstname, lastname, email, password } = req.body;
+      
+      // check if one value is empty
+      if (!firstname || !lastname || !email || !password) {
+        return errorResponse(res, "All fields are mandatory", 400);
+      }
 
-    // check existed email
-    const existedUser = await db.Users.findOne({ where: { email } });
-    if (existedUser) {
-      return res.status(400).send("Email has already existed");
-    } else {
-      // create new user
+      // check existed email
+      const existedUser = await db.Users.findOne({ where: { email } });
+      if (existedUser) {
+        return errorResponse(res, "Email has already existed", 400);
+      }
+
+      // create new user with null role
       const newUser = await createNewUser(
         firstname,
         lastname,
         email,
-        password,
-        role
+        password
       );
-      console.log("New user is: ", newUser);
-      return res.status(200).json(newUser);
+
+      // Generate temp token for role selection
+      const tempToken = jwt.sign(
+        {
+          id: newUser.id,
+          email: newUser.email,
+          currentRole: newUser.role,
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: "10m" }
+      );
+
+      // Return JSON response with redirect to role selection
+      return successResponse(
+        res,
+        {
+          token: tempToken,
+          redirectUrl: `${process.env.FRONTEND_URL}/auth/select-role?token=${tempToken}`
+        },
+        "Registration successful. Please select your role.",
+        200
+      );
+
+    } catch (err) {
+      console.error("Error in registerController:", err);
+      return errorResponse(res, "Internal Server Error", 500);
     }
   };
 
@@ -106,7 +128,7 @@ class AuthControllers {
         where: {
           email: email,
           resetToken: hashedToken,
-          resetTokenExpired: { [Op.gt]: new Date() },
+          resetTokenExpired: { [where.gt]: new Date() },
         },
       });
 
@@ -128,24 +150,54 @@ class AuthControllers {
     }
   };
 
-  googleRedirect = async (req, res) => {
+  googleRedirect = (req, res) => {
     try {
-      // 1. Lấy thông tin user từ req.user (hoặc nơi bạn lưu user sau khi xác thực Google)
-      const user = req.user; // hoặc lấy từ session, hoặc truy vấn DB
-  
-      // 2. Tạo JWT token cho user
-      const token = jwt.sign(
-        { id: user.id, email: user.email, role: user.role },
+      const user = req.user;
+      console.log("User object in googleRedirect:", user);
+      console.log("User role:", user.role);
+      console.log("User id:", user.id);
+
+      // Kiểm tra xem user đã có role chưa
+      if (user.role) {
+        console.log("User has role, redirecting to success");
+        const payload = {
+          id: user.id,
+          email: user.email,
+          firstname: user.firstName,
+          lastname: user.lastName,
+          role: user.role,
+        };
+
+        console.log("Token payload: ", payload);
+        const token = jwt.sign(payload, process.env.JWT_SECRET, {
+          expiresIn: process.env.JWT_EXPIRED_TIME,
+        });
+
+        console.log("Generated token: ", token);
+        const redirectURL = `${process.env.FRONTEND_URL}/auth/google/success?token=${token}`;
+        console.log("Redirected URL: ", redirectURL);
+        return res.redirect(redirectURL);
+      }
+
+      console.log("User has no role, redirecting to select-role");
+      // Nếu là user mới (chưa có role), tạo tempToken và chuyển đến trang chọn role
+      const tempToken = jwt.sign(
+        {
+          id: user.id,
+          email: user.email,
+          currentRole: user.role,
+        },
         process.env.JWT_SECRET,
-        { expiresIn: '7d' }
+        { expiresIn: "10m" }
       );
-  
-      // 3. Redirect về frontend kèm token và user (nên encode user là JSON)
-      const frontendUrl = `http://localhost:5173/auth/google/success?token=${token}&user=${encodeURIComponent(JSON.stringify(user))}`;
-      return res.redirect(frontendUrl);
+
+      // Redirect đến trang chọn role
+      const selectRoleURL = `${process.env.FRONTEND_URL}/auth/select-role?token=${tempToken}`;
+      console.log("Select role URL:", selectRoleURL);
+      return res.redirect(selectRoleURL);
     } catch (err) {
-      console.error('Google redirect error:', err);
-      return res.redirect('http://localhost:5173/auth/login?error=google');
+      console.error("Error occurred in googleRedirect: ", err);
+      return res.redirect(`${process.env.FRONTEND_URL}/auth/login?error=google`);
     }
   };
 
@@ -162,7 +214,8 @@ class AuthControllers {
           'dateOfBirth', 
           'city', 
           'gender', 
-          'avatar'
+          'avatar',
+          'role'
         ]
       });
 
@@ -178,7 +231,8 @@ class AuthControllers {
         dateOfBirth: user.dateOfBirth ? user.dateOfBirth.toISOString().split('T')[0] : null,
         city: user.city || '',
         gender: user.gender || '',
-        avatar: user.avatar || ''
+        avatar: user.avatar || '',
+        role: user.role || ''
       });
     } catch (error) {
       console.log("Error in getProfile: ", error);
@@ -220,6 +274,61 @@ class AuthControllers {
       });
     } catch (error) {
       res.status(500).json({ error: error.message });
+    }
+  };
+
+  updateUserRole = async (req, res) => {
+    try {
+      const { role } = req.body;
+      const userId = req.user.id;
+
+      // Validate role
+      if (!role || !['student', 'teacher'].includes(role)) {
+        return errorResponse(res, "Please select a valid role (student or teacher)", 400);
+      }
+
+      // Update user role in database
+      const user = await db.Users.findByPk(userId);
+      if (!user) {
+        return errorResponse(res, "User not found", 404);
+      }
+
+      await user.update({ role });
+
+      // Generate new token with updated role
+      const payload = {
+        id: user.id,
+        email: user.email,
+        firstname: user.firstName,
+        lastname: user.lastName,
+        role: role,
+      };
+
+      const token = jwt.sign(payload, process.env.JWT_SECRET, {
+        expiresIn: process.env.JWT_EXPIRED_TIME,
+      });
+
+      // Return success response with redirect URL
+      return successResponse(
+        res,
+        {
+          redirectUrl: `${process.env.FRONTEND_URL}/${role}/dashboard`,
+          token,
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            role: role,
+          }
+        },
+        "Role updated successfully",
+        200
+      );
+
+    } catch (err) {
+      console.error("Error in updateUserRole:", err);
+      return errorResponse(res, "Failed to update role", 500);
     }
   };
 }

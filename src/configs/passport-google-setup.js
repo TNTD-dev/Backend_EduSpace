@@ -14,26 +14,30 @@ passport.use(
     async (accessToken, refreshToken, profile, done) => {
       console.log("you have came to callback function");
       console.log(profile);
-      // check if the user exists - if not create a new one
-      const currentUser = await db.Users.findOne({
-        where: { googleId: profile.id },
-      });
-
-      if (currentUser) {
-        console.log(`Current user is ${currentUser}`);
-        done(null, currentUser);
-      } else {
-        const newUser = await db.Users.create({
-          firstName: profile.name.givenName,
-          lastName: profile.name.familyName,
-          email: profile.emails[0].value,
-          googleId: profile.id,
+      try {
+        // check if the user exists - if not create a new one
+        const currentUser = await db.Users.findOne({
+          where: { googleId: profile.id },
         });
-        console.log(`New user created ${newUser}`);
-        done(null, newUser);
-      }
 
-      console.log("You came to find user");
+        if (currentUser) {
+          console.log(`Current user is ${currentUser}`);
+          done(null, currentUser);
+        } else {
+          const newUser = await db.Users.create({
+            firstName: profile.name.givenName,
+            lastName: profile.name.familyName,
+            email: profile.emails[0].value,
+            googleId: profile.id,
+            role: null // Explicitly set role as null for new users
+          });
+          console.log(`New user created ${newUser}`);
+          done(null, newUser);
+        }
+      } catch (error) {
+        console.error("Error in Google strategy:", error);
+        done(error, null);
+      }
     }
   )
 );
@@ -42,8 +46,11 @@ passport.serializeUser((user, done) => {
   done(null, user.id);
 });
 
-passport.deserializeUser((id, done) => {
-  db.User.findByPk(id)
-    .then((user) => done(null, user))
-    .catch((err) => done(err));
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await db.Users.findByPk(id);
+    done(null, user);
+  } catch (error) {
+    done(error, null);
+  }
 });

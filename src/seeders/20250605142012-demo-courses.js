@@ -9,6 +9,7 @@ module.exports = {
         category: 'Programming',
         categoryColor: 'bg-blue-500',
         instructorId: 1,
+        instructorName: 'John Doe',
         image: '/cover/cover-react.jpg',
         enrollCode: 'REACT2024', // Phải unique
         description: 'Learn React from scratch and build modern web applications.',
@@ -25,6 +26,7 @@ module.exports = {
         category: 'SE',
         categoryColor: 'bg-[#9937fc]',
         instructorId: 2,
+        instructorName: 'Jane Smith',
         image: '/cover/cover-software-engineer.jpg',
         enrollCode: 'SE2024',
         description: 'This course is designed to introduce students to the fundamentals of software engineering.',

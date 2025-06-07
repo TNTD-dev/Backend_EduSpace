@@ -22,6 +22,10 @@ module.exports = {
       instructorId: {
         type: Sequelize.BIGINT,
       },
+      instructorName: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
       image: {
         type: Sequelize.TEXT,
       },

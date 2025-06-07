@@ -4,7 +4,7 @@ module.exports = {
   async up (queryInterface, Sequelize) {
     await queryInterface.bulkInsert('CoursesEnrollments', [
       {
-        courseId: 2, // Khóa học React Development
+        courseId: 1, // Khóa học React Development
         studentId: 1, // Giả sử user id=1 là student
         enrollmentDate: new Date('2024-03-01'),
         progress: 30,
@@ -16,7 +16,7 @@ module.exports = {
         updatedAt: new Date()
       },
       {
-        courseId: 3, // Khóa học Software Engineering
+        courseId: 2, // Khóa học Software Engineering
         studentId: 1, // Cùng student tham gia 2 khóa
         enrollmentDate: new Date('2024-01-01'),
         progress: 28,

@@ -41,6 +41,11 @@ module.exports = (sequelize, DataTypes) => {
         field: "instructorId",
         allowNull: true,
       },
+      instructorName: {
+        type: DataTypes.STRING,
+        field: "instructorName",
+        allowNull: true,
+      },
       enrollCode: {
         type: DataTypes.STRING,
         allowNull: false,

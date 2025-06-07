@@ -21,7 +21,8 @@ router.get(
   passport.authenticate("google"),
   authControllers.googleRedirect
 );
-
+// Update role
+router.post("/update-role", authMiddleware, authControllers.updateUserRole);
 // Profile routes
 router.get('/profile', authMiddleware, async (req, res) => {
   try {
