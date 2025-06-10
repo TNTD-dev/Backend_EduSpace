@@ -10,12 +10,17 @@ const moduleAssignmentRoutes = require("./moduleAssignmentRoutes");
 const assignmentSubmission = require("./assignmentSubmissionRoutes");
 const moduleResourcesRoutes = require("./moduleResourcesRoutes");
 const calendarRoutes = require("./calendarRoutes");
+const tagsRoute = require("./tagsRoute");
+const userRoutes = require("./userRoutes");
 
 const webRoutes = (app) => {
   app.use("/", siteRoutes);
 
   // Authentication management routes
   app.use("/auth", authRoutes);
+
+  // User management routes
+  app.use("/user", userRoutes);
 
   // Flashcard decks management route
   app.use("/api/sets", setsRoutes);
@@ -57,6 +62,8 @@ const webRoutes = (app) => {
   );
 
   app.use("/api/calendar", calendarRoutes);
+
+  app.use("/api/tags", tagsRoute);
 };
 
 export default webRoutes;

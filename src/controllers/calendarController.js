@@ -5,14 +5,21 @@ const { errorResponse, successResponse } = require("../utils/responseHelper");
 class CalendarController {
   getAll = async (req, res) => {
     try {
-      const { userId } = req.user.id;
-      if (!userId || !courseId) {
+      const  userId  = req.user.id;
+      if (!userId ) {
         return errorResponse(res, "Missing values", 400);
       }
       const allEvents = await db.Calendar.findAll({
         where: {
           userId: userId,
         },
+        include: [{
+          model: db.Tags,
+          as: 'tag'
+        }],
+        attributes: {
+          include: ['tagId']
+        }
       });
 
       if (!allEvents || allEvents.length === 0) {
@@ -44,6 +51,13 @@ class CalendarController {
           id: eventId,
           userId: userId,
         },
+        include: [{
+          model: db.Tags,
+          as: 'tag'
+        }],
+        attributes: {
+          include: ['tagId']
+        }
       });
 
       if (!event) {
@@ -60,7 +74,7 @@ class CalendarController {
   createNew = async (req, res) => {
     try {
       const userId = req.user.id;
-      const { title, description, startTime, endTime, tag, courseId } =
+      const { title, description, startTime, endTime, tagId, courseId } =
         req.body;
 
       if (!userId || !startTime || !endTime) {
@@ -78,18 +92,45 @@ class CalendarController {
         return errorResponse(res, "Invalid end time", 400);
       }
 
+      // Verify tagId exists if provided
+      if (tagId !== undefined) {
+        const tag = await db.Tags.findOne({
+          where: {
+            id: tagId,
+            userId: userId
+          }
+        });
+        if (!tag) {
+          return errorResponse(res, "Tag not found", 404);
+        }
+      }
+
       const newData = {};
       if (title !== undefined) newData.title = title;
       if (description !== undefined) newData.description = description;
-      if (tag !== undefined) newData.tag = tag;
+      if (tagId !== undefined) newData.tagId = tagId;
       if (courseId !== undefined) newData.courseId = courseId;
       newData.userId = userId;
       newData.startTime = start;
       newData.endTime = end;
+
       const newEvent = await db.Calendar.create(newData);
+      
+      // Fetch the created event with its tag
+      const createdEvent = await db.Calendar.findOne({
+        where: { id: newEvent.id },
+        include: [{
+          model: db.Tags,
+          as: 'tag'
+        }],
+        attributes: {
+          include: ['tagId']
+        }
+      });
+
       return successResponse(
         res,
-        newEvent,
+        createdEvent,
         "Successfully created new event",
         201
       );
@@ -103,7 +144,7 @@ class CalendarController {
     try {
       const userId = req.user.id;
       const { eventId } = req.params;
-      const { title, description, startTime, endTime, tag } = req.body;
+      const { title, description, startTime, endTime, tagId } = req.body;
       if (!userId || !eventId) {
         return errorResponse(res, "Missing values", 400);
       }
@@ -125,6 +166,19 @@ class CalendarController {
         return errorResponse(res, "endTime must be after startTime", 400);
       }
 
+      // Verify tagId exists if provided
+      if (tagId !== undefined) {
+        const tag = await db.Tags.findOne({
+          where: {
+            id: tagId,
+            userId: userId
+          }
+        });
+        if (!tag) {
+          return errorResponse(res, "Tag not found", 404);
+        }
+      }
+
       const updateEvent = await db.Calendar.findOne({
         where: {
           userId: userId,
@@ -141,12 +195,25 @@ class CalendarController {
       if (start !== undefined) updateData.startTime = start;
       if (end !== undefined) updateData.endTime = end;
       if (description !== undefined) updateData.description = description;
-      if (tag !== undefined) updateData.tag = tag;
+      if (tagId !== undefined) updateData.tagId = tagId;
 
       await updateEvent.update(updateData);
+
+      // Fetch the updated event with its tag
+      const updatedEvent = await db.Calendar.findOne({
+        where: { id: eventId },
+        include: [{
+          model: db.Tags,
+          as: 'tag'
+        }],
+        attributes: {
+          include: ['tagId']
+        }
+      });
+
       return successResponse(
         res,
-        updateEvent,
+        updatedEvent,
         "Successfully updated event",
         200
       );
@@ -155,6 +222,7 @@ class CalendarController {
       return errorResponse(res, "Internal Server Error", 500);
     }
   };
+
   delete = async (req, res) => {
     try {
       const { eventId } = req.params;

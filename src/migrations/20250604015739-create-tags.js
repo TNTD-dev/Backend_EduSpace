@@ -2,38 +2,28 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("Calendars", {
+    await queryInterface.createTable("Tags", {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER,
       },
-      title: {
+      name: {
         type: Sequelize.STRING,
         allowNull: false,
       },
-      description: {
-        type: Sequelize.TEXT,
-        allowNull: true,
-      },
-      startTime: {
-        type: Sequelize.DATE,
+      bgColor: {
+        type: Sequelize.STRING,
         allowNull: false,
       },
-      endTime: {
-        type: Sequelize.DATE,
+      textColor: {
+        type: Sequelize.STRING,
         allowNull: false,
       },
-      tagId: {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-        references: {
-          model: 'Tags',
-          key: 'id'
-        },
-        onUpdate: 'SET NULL',
-        onDelete: 'SET NULL'
+      borderColor: {
+        type: Sequelize.STRING,
+        allowNull: false,
       },
       userId: {
         type: Sequelize.INTEGER,
@@ -44,16 +34,6 @@ module.exports = {
         },
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
-      },
-      courseId: {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-        references: {
-          model: 'Courses',
-          key: 'id'
-        },
-        onUpdate: 'SET NULL',
-        onDelete: 'SET NULL'
       },
       createdAt: {
         allowNull: false,
@@ -67,6 +47,6 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("Calendars");
+    await queryInterface.dropTable("Tags");
   },
-};
+}; 

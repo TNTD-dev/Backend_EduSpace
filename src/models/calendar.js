@@ -18,31 +18,43 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "courseId",
         as: "course",
       });
+      // Calendar belongs to a Tag
+      Calendar.belongsTo(models.Tags, {
+        foreignKey: "tagId",
+        as: "tag",
+      });
     }
   }
   Calendar.init(
     {
-      title: DataTypes.STRING,
-      description: DataTypes.TEXT,
-      createdDate: DataTypes.DATE,
-      startTime: DataTypes.DATE,
-      endTime: DataTypes.DATE,
-      tag: {
-        type: DataTypes.ENUM(
-          "webDesign",
-          "3DModeling",
-          "software",
-          "design",
-          "Development",
-          "meeting",
-          "review",
-          "planning",
-          "testing",
-          "deployment"
-        ),
+      title: {
+        type: DataTypes.STRING,
+        allowNull: false,
       },
-      userId: DataTypes.BIGINT,
-      courseId: DataTypes.BIGINT,
+      description: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      startTime: {
+        type: DataTypes.DATE,
+        allowNull: false,
+      },
+      endTime: {
+        type: DataTypes.DATE,
+        allowNull: false,
+      },
+      tagId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      userId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      courseId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
     },
     {
       sequelize,
