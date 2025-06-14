@@ -33,10 +33,10 @@ module.exports = (sequelize, DataTypes) => {
         as: "replies",
       });
 
-      // User's flashcard sets
-      Users.hasMany(models.FlashcardSets, {
+      // User's flashcard decks
+      Users.hasMany(models.FlashcardDecks, {
         foreignKey: "userId",
-        as: "flashcardSets",
+        as: "flashcardDecks",
       });
 
       // User's assignments

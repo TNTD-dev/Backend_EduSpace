@@ -12,6 +12,7 @@ const moduleResourcesRoutes = require("./moduleResourcesRoutes");
 const calendarRoutes = require("./calendarRoutes");
 const tagsRoute = require("./tagsRoute");
 const userRoutes = require("./userRoutes");
+const flashcardRoutes = require("./flashcardRoutes");
 
 const webRoutes = (app) => {
   app.use("/", siteRoutes);
@@ -22,11 +23,9 @@ const webRoutes = (app) => {
   // User management routes
   app.use("/user", userRoutes);
 
-  // Flashcard decks management route
-  app.use("/api/sets", setsRoutes);
-
-  // Flashcards management route
-  app.use("/api/sets/:setId/cards", cardsRoutes);
+  
+  // Flashcard System routes
+  app.use("/api/flashcards", flashcardRoutes);
 
   // Courses management route
   app.use("/api/courses", courseRoutes);
