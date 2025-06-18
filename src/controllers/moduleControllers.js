@@ -24,6 +24,7 @@ class ModuleControllers {
           },
         ],
         order: [["order", "ASC"]],
+        attributes: { include: ['order'] }
       });
 
       if (moduleInfo && moduleInfo.length > 0) {
@@ -86,9 +87,29 @@ class ModuleControllers {
 
   createModule = async (req, res) => {
     try {
+      console.log("req.originalUrl:", req.originalUrl); // Xem URL thực tế FE gọi lên
+      console.log("req.params:", req.params);   
+      
       const { courseId } = req.params;
       const { title, description, imageURL } = req.body;
+      
+      // Check if user is authenticated
+      if (!req.user || !req.user.id) {
+        return errorResponse(res, "User not authenticated", 401);
+      }
+      
       const userId = req.user.id;
+      console.log("User ID:", userId); // Debug log
+      console.log("Course ID:", courseId); // Debug log
+
+      // Check if course exists
+      const course = await db.Courses.findOne({
+        where: { id: courseId }
+      });
+
+      if (!course) {
+        return errorResponse(res, "Course not found", 404);
+      }
 
       // Check if use is valid instructor
       const isValidInstructor = await db.Courses.findOne({
@@ -123,26 +144,37 @@ class ModuleControllers {
         return errorResponse(res, "Missing values", 400);
       }
 
+      // Get the highest order number
+      const lastModule = await db.Modules.findOne({
+        where: { courseId },
+        order: [['order', 'DESC']]
+      });
+
+      const newOrder = lastModule ? lastModule.order + 1 : 1;
+
+      // Create module
       const newModule = await db.Modules.create({
         courseId,
         title,
         description,
         imageURL,
+        order: newOrder
       });
 
-      if (newModule) {
-        return successResponse(
-          res,
-          newModule,
-          "Create New Module Successfully",
-          201
-        );
-      } else {
+      if (!newModule) {
         return errorResponse(res, "Could not create new module");
       }
+
+      return successResponse(
+        res,
+        newModule,
+        "Create New Module Successfully",
+        201
+      );
+
     } catch (err) {
       console.error("Error occured in createModule: ", err);
-      return errorResponse(res, "Internal Server Error", 500);
+      return errorResponse(res, err.message || "Internal Server Error", 500);
     }
   };
 
@@ -194,7 +226,7 @@ class ModuleControllers {
   deleteModule = async (req, res) => {
     try {
       const { moduleId, courseId } = req.params;
-      const { userId } = req.user.id;
+      const userId = req.user.id;
 
       const isValidInstructor = await db.Courses.findOne({
         where: {
@@ -251,6 +283,44 @@ class ModuleControllers {
       );
     } catch (err) {
       console.error("Error in getModuleProgress:", err);
+      return errorResponse(res, "Internal Server Error", 500);
+    }
+  };
+
+  updateModuleOrder = async (req, res) => {
+    try {
+      const { courseId, moduleId } = req.params;
+      const { newOrder } = req.body;
+      const userId = req.user.id;
+
+      // Check if user has authorization
+      const isValidInstructor = await db.Courses.findOne({
+        where: {
+          id: courseId,
+          instructorId: userId,
+        },
+      });
+
+      if (!isValidInstructor) {
+        return errorResponse(res, "Not Authorized", 403);
+      }
+
+      const module = await db.Modules.findByPk(moduleId);
+      if (!module) {
+        return errorResponse(res, "Module not found", 404);
+      }
+
+      // Update the order
+      await module.update({ order: newOrder });
+
+      return successResponse(
+        res,
+        module,
+        "Successfully updated module order",
+        200
+      );
+    } catch (err) {
+      console.error("Error occurred in updateModuleOrder: ", err);
       return errorResponse(res, "Internal Server Error", 500);
     }
   };

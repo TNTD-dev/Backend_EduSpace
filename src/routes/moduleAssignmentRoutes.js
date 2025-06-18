@@ -1,5 +1,5 @@
 const express = require("express");
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 const verifyToken = require("../middlewares/authMiddlewares");
 const isMember = require("../middlewares/isMember");
 const isTeacher = require("../middlewares/isTeacher");

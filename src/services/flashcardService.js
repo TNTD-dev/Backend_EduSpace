@@ -488,6 +488,70 @@ class FlashcardService {
     }
     return cards.length;
   }
+
+  // Get flashcard statistics for dashboard
+  static async getFlashcardStats(userId) {
+    try {
+      // Fetch all decks for the user
+      const decks = await FlashcardDecks.findAll({
+        where: { userId }
+      });
+
+      // Fetch cards for each deck
+      const allCardsPromises = decks.map((deck) =>
+        FlashcardCards.findAll({
+          where: { deckId: deck.id }
+        })
+      );
+
+      const cardsResponses = await Promise.all(allCardsPromises);
+      const allCards = cardsResponses.flat();
+
+      // Calculate total cards
+      const totalCards = allCards.length;
+
+      // Calculate due cards
+      const dueCards = allCards.filter(
+        (card) => card.status === "due" || card.status === "new"
+      ).length;
+
+      // Calculate learned cards
+      const learnedCards = allCards.filter(
+        (card) => card.status === "learned"
+      ).length;
+
+      // Calculate retention score
+      const calculateRetentionScore = (cards) => {
+        if (!cards || cards.length === 0) return 0;
+
+        const weights = {
+          learned: 1.0,
+          due: 0.5,
+          new: 0.2,
+        };
+
+        const totalWeight = cards.reduce(
+          (sum, card) => sum + (weights[card.status] || 0),
+          0
+        );
+
+        const maxPossibleWeight = cards.length * weights.learned;
+        return Math.round((totalWeight / maxPossibleWeight) * 100) || 0;
+      };
+
+      const retentionScore = calculateRetentionScore(allCards);
+
+      return {
+        totalCards,
+        dueCards,
+        learnedCards,
+        retentionScore
+      };
+    } catch (error) {
+      console.error('Error fetching flashcard stats:', error);
+      throw new Error('Failed to fetch flashcard statistics');
+    }
+  }
 }
 
 module.exports = FlashcardService;  

@@ -50,7 +50,30 @@ class CoursesControllers {
         return errorResponse(res, "Course not found", 404);
       }
 
-      return successResponse(res, course);
+      
+
+      // Chuẩn hóa dữ liệu trả về cho FE edit
+      const courseData = {
+        id: course.id,
+        title: course.title,
+        category: course.category,
+        categoryColor: course.categoryColor,
+        description: course.description,
+        startDate: course.startDate,
+        endDate: course.endDate,
+        schedule: course.schedule,
+        location: course.location,
+        image: course.image,
+        status: course.status,
+        instructorId: course.instructorId,
+        instructorName: course.Instructor?.dataValues 
+          ? `${course.Instructor.dataValues.firstname || ""} ${course.Instructor.dataValues.lastname || ""}`.trim()
+          : "",
+      };
+
+      
+
+      return successResponse(res, courseData);
     } catch (err) {
       console.error("Error in getSingleCourse:", err);
       return errorResponse(res, "Internal server error", 500);
@@ -62,7 +85,7 @@ class CoursesControllers {
     const transaction = await db.sequelize.transaction();
 
     try {
-      const { title, category, description, startDate, endDate } = req.body;
+      const { title, category, description, startDate, endDate, schedule, location, image } = req.body;
 
       // Validation
       if (!title || !category) {
@@ -78,6 +101,42 @@ class CoursesControllers {
         exists = !!found;
       } while (exists);
 
+      // Danh sách màu có thể dùng
+      const colorList = [
+        "bg-blue-500",
+        "bg-green-500",
+        "bg-yellow-500",
+        "bg-red-500",
+        "bg-pink-500",
+        "bg-purple-500",
+        "bg-orange-500",
+        // ... thêm màu tùy ý
+      ];
+
+      // Kiểm tra xem category đã có màu chưa
+      let categoryColor;
+      const existingCourse = await db.Courses.findOne({
+        where: { category }
+      });
+      if (existingCourse && existingCourse.categoryColor) {
+        // Nếu đã có, dùng lại màu cũ
+        categoryColor = existingCourse.categoryColor;
+      } else {
+        // Nếu chưa có, chọn màu chưa dùng
+        const usedColors = (await db.Courses.findAll({
+          attributes: ['categoryColor'],
+          group: ['categoryColor']
+        })).map(c => c.categoryColor);
+
+        const availableColors = colorList.filter(color => !usedColors.includes(color));
+        if (availableColors.length > 0) {
+          categoryColor = availableColors[Math.floor(Math.random() * availableColors.length)];
+        } else {
+          // Nếu hết màu, chọn lại ngẫu nhiên trong danh sách
+          categoryColor = colorList[Math.floor(Math.random() * colorList.length)];
+        }
+      }
+
       const newCourse = await db.Courses.create(
         {
           title,
@@ -86,8 +145,12 @@ class CoursesControllers {
           enrollCode: code,
           startDate,
           endDate,
+          schedule,
+          location,
+          image,
           instructorId: req.user.id,
-          status: "current",
+          status: "draft",
+          categoryColor,
         },
         { transaction }
       );

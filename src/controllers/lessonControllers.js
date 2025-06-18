@@ -204,42 +204,45 @@ class lessonControllers {
     try {
       const userId = req.user.id;
       const { moduleId } = req.params;
-      const {
-        title,
-        duration,
-        completed = null,
-        contentURL,
-        contentData,
-        type,
-      } = req.body;
+      const { title, description } = req.body;
+      const file = req.file;
 
-      if (!title || !duration || !contentURL || !contentData || !type) {
+      if (!title) {
         return errorResponse(res, "Missing Values", 400);
       }
 
-      const existedLesson = await db.Lessons.findOne({
-        where: {
-          moduleId: moduleId,
-          title,
-        },
-      });
-
-      if (existedLesson) {
-        return errorResponse(
-          res,
-          "Lesson with this title is already in module",
-          400
-        );
+      // Xác định type dựa vào file
+      let type = "document";
+      if (file) {
+        if (file.mimetype.startsWith("video/")) {
+          type = "video";
+        } else if (
+          file.mimetype === "application/pdf" ||
+          file.mimetype === "application/msword" ||
+          file.mimetype === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        ) {
+          type = "document";
+        }
       }
+
+      const contentURL = file ? `/uploads/lessons/${file.filename}` : null;
+      const contentData = file ? file.originalname : null;
+
+      // Lấy order lớn nhất trong module
+      const lastLesson = await db.Lessons.findOne({
+        where: { moduleId },
+        order: [['order', 'DESC']]
+      });
+      const newOrder = lastLesson ? lastLesson.order + 1 : 1;
 
       const newLesson = await db.Lessons.create({
         moduleId,
         title,
-        duration,
-        completed,
+        description,
+        type,
         contentURL,
         contentData,
-        type,
+        order: newOrder,
       });
 
       if (newLesson) {
@@ -262,8 +265,8 @@ class lessonControllers {
     try {
       const { lessonId, moduleId, courseId } = req.params;
       const userId = req.user.id;
-      const { title, duration, completed, contentURL, contentData, type } =
-        req.body;
+      const { title, description, type } = req.body;
+      const file = req.file;
 
       // Kiểm tra module thuộc course
       const module = await db.Modules.findOne({
@@ -284,11 +287,23 @@ class lessonControllers {
       // Chỉ update trường được gửi lên
       const updateData = {};
       if (title !== undefined) updateData.title = title;
-      if (duration !== undefined) updateData.duration = duration;
-      if (completed !== undefined) updateData.completed = completed;
-      if (contentURL !== undefined) updateData.contentURL = contentURL;
-      if (contentData !== undefined) updateData.contentData = contentData;
+      if (description !== undefined) updateData.description = description;
       if (type !== undefined) updateData.type = type;
+
+      // Nếu có file mới thì ghi đè contentURL, contentData, type
+      if (file) {
+        updateData.contentURL = `/uploads/lessons/${file.filename}`;
+        updateData.contentData = file.originalname;
+        if (file.mimetype.startsWith("video/")) {
+          updateData.type = "video";
+        } else if (
+          file.mimetype === "application/pdf" ||
+          file.mimetype === "application/msword" ||
+          file.mimetype === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        ) {
+          updateData.type = "document";
+        }
+      }
 
       await lesson.update(updateData);
 
@@ -325,6 +340,47 @@ class lessonControllers {
       return successResponse(res, null, "Successfully deleted lesson", 200);
     } catch (err) {
       console.error("Error occured in deleteLesson: ", err);
+      return errorResponse(res, "Internal Server Error", 500);
+    }
+  };
+
+  updateLessonOrder = async (req, res) => {
+    try {
+      const { courseId, moduleId, lessonId } = req.params;
+      const { newOrder } = req.body;
+      const userId = req.user.id;
+
+      // Kiểm tra quyền giáo viên
+      const isValidInstructor = await db.Courses.findOne({
+        where: {
+          id: courseId,
+          instructorId: userId,
+        },
+      });
+
+      if (!isValidInstructor) {
+        return errorResponse(res, "Not Authorized", 403);
+      }
+
+      // Kiểm tra lesson tồn tại
+      const lesson = await db.Lessons.findOne({
+        where: { id: lessonId, moduleId: moduleId },
+      });
+      if (!lesson) {
+        return errorResponse(res, "Lesson not found", 404);
+      }
+
+      // Cập nhật thứ tự
+      await lesson.update({ order: newOrder });
+
+      return successResponse(
+        res,
+        lesson,
+        "Successfully updated lesson order",
+        200
+      );
+    } catch (err) {
+      console.error("Error occurred in updateLessonOrder: ", err);
       return errorResponse(res, "Internal Server Error", 500);
     }
   };

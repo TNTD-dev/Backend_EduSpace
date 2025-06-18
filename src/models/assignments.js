@@ -42,7 +42,9 @@ module.exports = (sequelize, DataTypes) => {
     {
       sequelize,
       modelName: "Assignments",
-      underscored: true, // if you want snake_case columns (created_at)
+      tableName: "assignments",
+      underscored: false, // if you want snake_case columns (created_at)
+      timestamps: false
     }
   );
 

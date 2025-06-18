@@ -27,6 +27,10 @@ module.exports = {
         type: Sequelize.TEXT,
         allowNull: false,
       },
+      cardSetTitle: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
       status: {
         type: Sequelize.STRING,
         defaultValue: "new",

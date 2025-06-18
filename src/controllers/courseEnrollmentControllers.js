@@ -456,13 +456,20 @@ class CourseEnrollmentControllers {
               "title",
               "category",
               "categoryColor",
-              "instructorName",
               "image",
               "description",
               "status",
               "startDate",
               "endDate",
+              "instructorId"
             ],
+            include: [
+              {
+                model: db.Users,
+                as: "Instructor",
+                attributes: ["id", "firstName", "lastName"],
+              }
+            ]
           },
           {
             model: db.Users,
@@ -477,11 +484,131 @@ class CourseEnrollmentControllers {
         ...e.course?.toJSON(),
         progress: e.progress,
         total: e.total,
+        instructorName: e.course?.Instructor ? 
+          `${e.course.Instructor.firstName || ''} ${e.course.Instructor.lastName || ''}`.trim() : 
+          ''
       }));
 
       return successResponse(res, courses, "Successfully retrieved my courses", 200);
     } catch (err) {
       console.error("Error in getMyCourses:", err);
+      return errorResponse(res, "Internal server error", 500);
+    }
+  };
+
+  /**
+   * Get detail of a course that the current student has enrolled
+   * @route GET /api/coursesEnrollment/my-course/:courseId
+   */
+  getMyCourseDetail = async (req, res) => {
+    try {
+      const db = require("../models/index");
+      const studentId = req.user.id;
+      const { courseId } = req.params;
+
+      // Kiểm tra user có phải là student không
+      const student = await db.Users.findOne({
+        where: { id: studentId, role: "student" },
+      });
+      if (!student) {
+        return errorResponse(res, "Student not found", 404);
+      }
+
+      // Kiểm tra đã enroll chưa
+      const enrollment = await db.CoursesEnrollments.findOne({
+        where: { studentId, courseId },
+      });
+      if (!enrollment) {
+        return errorResponse(res, "You are not enrolled in this course", 403);
+      }
+
+      // Lấy thông tin course + instructor
+      const course = await db.Courses.findOne({
+        where: { id: courseId },
+        include: [
+          {
+            model: db.Users,
+            as: "Instructor",
+            attributes: ["id", "firstName", "lastName", "email"],
+          },
+        ],
+      });
+      if (!course) {
+        return errorResponse(res, "Course not found", 404);
+      }
+
+      // Lấy modules và lessons
+      const modules = await db.Modules.findAll({
+        where: { courseId },
+        order: [["order", "ASC"]],
+        include: [
+          {
+            model: db.Lessons,
+            as: "Lessons",
+            order: [["order", "ASC"]],
+          },
+        ],
+      });
+
+      // Lấy assignments (theo từng module)
+      const moduleIds = modules.map(m => m.id);
+      const assignments = await db.Assignments.findAll({
+        where: { moduleId: moduleIds },
+        attributes: [
+          'id',
+          'moduleId',
+          'title',
+          'dueDate',
+          'status',
+          'description'
+        ],
+      });
+
+      // Lấy resources
+      const resources = await db.Resources.findAll({
+        where: { courseId },
+        attributes: [
+          'id',
+          'courseId',
+          'moduleId',
+          'title',
+          'description',
+          'fileURL',
+          'fileName',
+          'mimeType',
+          'fileSize',
+          'uploadedAt'
+        ]
+      });
+
+      // Lấy discussions
+      const discussions = await db.Discussions.findAll({
+        where: { courseId },
+        include: [
+          {
+            model: db.Users,
+            as: "author",
+            attributes: ["id", "firstName", "lastName", "role"],
+          }
+        ],
+        order: [["createdAt", "DESC"]],
+      });
+
+      // Trả về dữ liệu tổng hợp
+      return successResponse(res, {
+        ...course.toJSON(),
+        instructorName: course.Instructor ? `${course.Instructor.firstName || ''} ${course.Instructor.lastName || ''}`.trim() : '',
+        modules,
+        assignments,
+        resources,
+        discussions,
+        progress: enrollment.progress,
+        total: enrollment.total,
+        grade: enrollment.grade,
+        completionDate: enrollment.completionDate,
+      }, "Successfully retrieved course detail", 200);
+    } catch (err) {
+      console.error("Error in getMyCourseDetail:", err);
       return errorResponse(res, "Internal server error", 500);
     }
   };

@@ -22,7 +22,6 @@ router.put(
   coursesControllers.updateCourse
 );
 // DELETE @protected route
-
 router.delete(
   "/:courseId/deleteCourse",
   verifyToken,

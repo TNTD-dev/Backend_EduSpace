@@ -17,7 +17,7 @@ app.use(cors({
   origin: 'http://localhost:5173', // Đúng với địa chỉ frontend của bạn
   credentials: true, // Nếu bạn dùng cookie, còn nếu chỉ dùng token thì có thể bỏ
   allowedHeaders: ['Content-Type', 'Authorization'], // Cho phép header Authorization
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']
 }));
 app.use(bodyParser.urlencoded());
 app.use(bodyParser.json());
@@ -40,6 +40,9 @@ app.use(passport.session());
 
 // View Engine
 viewEngine(app);
+
+// Static file serving for uploads
+app.use('/uploads', express.static('uploads'));
 
 // CONNECT DATABASE
 connectDB();

@@ -207,6 +207,19 @@ class FlashcardController {
       return errorResponse(res, error.message, 500);
     }
   }
+
+  // Get flashcard statistics for dashboard
+  async getFlashcardStats(req, res) {
+    try {
+      const userId = req.user.id; // Assuming user is authenticated and req.user is set
+
+      const stats = await FlashcardService.getFlashcardStats(userId);
+      return successResponse(res, stats);
+    } catch (error) {
+      console.error('Error fetching flashcard stats:', error);
+      return errorResponse(res, 'Failed to fetch flashcard statistics', 500);
+    }
+  }
 }
 
 module.exports = new FlashcardController(); 

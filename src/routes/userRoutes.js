@@ -7,5 +7,6 @@ const userControllers = require("../controllers/userControllers");
 
 router.get("/", verifyToken, userControllers.getUser);
 router.put("/profile", verifyToken, userControllers.updateUser);
+router.get("/:id", userControllers.getUserById);
 
 module.exports = router;

@@ -16,6 +16,12 @@ module.exports = (sequelize, DataTypes) => {
         as: "students",
       });
 
+      Courses.belongsTo(models.Users, {
+        foreignKey: "instructorId",
+        as: "Instructor",
+      });
+      
+
       Courses.hasMany(models.Modules, {
         foreignKey: "courseId",
         as: "Course",
@@ -41,11 +47,6 @@ module.exports = (sequelize, DataTypes) => {
         field: "instructorId",
         allowNull: true,
       },
-      instructorName: {
-        type: DataTypes.STRING,
-        field: "instructorName",
-        allowNull: true,
-      },
       enrollCode: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -54,6 +55,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       image: DataTypes.TEXT,
       description: DataTypes.TEXT,
+      
       startDate: {
         type: DataTypes.DATE,
         field: "startDate",
@@ -63,6 +65,7 @@ module.exports = (sequelize, DataTypes) => {
         field: "endDate",
       },
       schedule: DataTypes.STRING,
+      location: DataTypes.STRING,
       status: {
         type: DataTypes.STRING,
       },

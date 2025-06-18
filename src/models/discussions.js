@@ -9,6 +9,7 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      Discussions.belongsTo(models.Users, { as: 'author', foreignKey: 'authorId' });
     }
   }
   Discussions.init(
@@ -39,7 +40,12 @@ module.exports = (sequelize, DataTypes) => {
     {
       sequelize,
       modelName: "Discussions",
+      tableName: "discussions",
     }
   );
   return Discussions;
 };
+
+
+
+

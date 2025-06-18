@@ -1,36 +1,34 @@
 const express = require("express");
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 const verifyToken = require("../middlewares/authMiddlewares");
 const moduleControllers = require("../controllers/moduleControllers");
 const isMember = require("../middlewares/isMember");
 const lessonControllers = require("../controllers/lessonControllers");
 
-// ---------------------------- Module Controllers ------------------------------------
-
-// GET @protected routes
+// Lấy tất cả modules của 1 course
 router.get("/", verifyToken, isMember, moduleControllers.getAllModules);
+
+// Lấy 1 module cụ thể
 router.get("/:moduleId", verifyToken, isMember, moduleControllers.getModule);
+
+// Lấy progress của 1 module
 router.get(
   "/:moduleId/progress",
   verifyToken,
   isMember,
   moduleControllers.getModuleProgress
 );
-// POST @protected route
-router.post("/create-module", verifyToken, moduleControllers.createModule);
 
-// PUT @protected route
-router.put(
-  "/:moduleId/update-module",
-  verifyToken,
-  moduleControllers.updateModule
-);
+// Tạo module mới
+router.post("/", verifyToken, moduleControllers.createModule);
 
-// DELETE @protected route
-router.delete(
-  "/:moduleId/delete-module",
-  verifyToken,
-  moduleControllers.deleteModule
-);
+// Cập nhật module
+router.put("/:moduleId", verifyToken, moduleControllers.updateModule);
+
+// Cập nhật thứ tự module
+router.patch("/:moduleId/order", verifyToken, moduleControllers.updateModuleOrder);
+
+// Xóa module
+router.delete("/:moduleId", verifyToken, moduleControllers.deleteModule);
 
 module.exports = router;

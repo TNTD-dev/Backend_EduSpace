@@ -1,5 +1,5 @@
 const express = require("express");
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 const courseEnrollmentControllers = require("../controllers/courseEnrollmentControllers");
 const isMember = require("../middlewares/isMember");
 const verifyToken = require("../middlewares/authMiddlewares");
@@ -58,6 +58,12 @@ router.get(
   "/my-courses",
   verifyToken,
   courseEnrollmentControllers.getMyCourses
+);
+
+router.get(
+  "/my-course/:courseId",
+  verifyToken,
+  courseEnrollmentControllers.getMyCourseDetail
 );
 
 module.exports = router;

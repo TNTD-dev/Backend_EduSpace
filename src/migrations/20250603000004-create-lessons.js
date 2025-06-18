@@ -16,6 +16,9 @@ module.exports = {
       title: {
         type: Sequelize.STRING,
       },
+      description: {
+        type: Sequelize.TEXT,
+      },
       duration: {
         type: Sequelize.TIME,
       },
@@ -28,6 +31,9 @@ module.exports = {
       },
       contentData: {
         type: Sequelize.TEXT,
+      },
+      contentURL: {
+        type: Sequelize.STRING,
       },
       completed: {
         type: Sequelize.BOOLEAN,

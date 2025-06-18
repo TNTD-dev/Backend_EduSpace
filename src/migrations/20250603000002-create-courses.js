@@ -22,10 +22,6 @@ module.exports = {
       instructorId: {
         type: Sequelize.BIGINT,
       },
-      instructorName: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
       image: {
         type: Sequelize.TEXT,
       },
@@ -48,6 +44,10 @@ module.exports = {
       },
       status: {
         type: Sequelize.STRING,
+      },
+      location: {
+        type: Sequelize.STRING,
+        allowNull: true,
       },
       createdAt: {
         allowNull: false,

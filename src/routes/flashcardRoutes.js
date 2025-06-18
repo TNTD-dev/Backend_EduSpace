@@ -29,6 +29,7 @@ router.get('/study/due', flashcardController.getDueCards);
 router.get('/study/due/:date', flashcardController.getDueCardsByDate);
 router.post('/study/:cardId', flashcardController.updateStudyLog);
 
-
+// Get flashcard statistics for dashboard
+router.get('/stats', flashcardController.getFlashcardStats);
 
 module.exports = router; 

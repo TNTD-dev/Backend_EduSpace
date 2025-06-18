@@ -3,7 +3,19 @@ const path = require("path");
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "uploads/assignmentSubmission");
+    if (file.mimetype.startsWith("image/")) {
+      cb(null, "uploads/courseImages");
+    } else if (
+      file.mimetype.startsWith("video/") ||
+      file.mimetype === "application/pdf" ||
+      file.mimetype === "application/msword" ||
+      file.mimetype === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+      file.mimetype === "text/plain"
+    ) {
+      cb(null, "uploads/lessons");
+    } else {
+      cb(null, "uploads/assignmentSubmission");
+    }
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
@@ -13,10 +25,11 @@ const storage = multer.diskStorage({
 
 const fileFilter = (req, file, cb) => {
   if (
+    file.mimetype.startsWith("image/") ||
+    file.mimetype.startsWith("video/") ||
     file.mimetype === "application/pdf" ||
     file.mimetype === "application/msword" ||
-    file.mimetype ===
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+    file.mimetype === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
     file.mimetype === "text/plain"
   ) {
     cb(null, true);
@@ -28,7 +41,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
-  limits: { fileSize: 10 * 1024 * 1024 },
+  limits: { fileSize: 100 * 1024 * 1024 },
 });
 
 module.exports = upload;

@@ -33,7 +33,7 @@ class UserControllers {
         lastName,
         email,
         phone,
-        address,
+        city,
         dateOfBirth,
         gender,
       } = req.body;
@@ -72,7 +72,7 @@ class UserControllers {
       if (lastName !== undefined) updateData.lastName = lastName;
       if (email !== undefined) updateData.email = email;
       if (phone !== undefined) updateData.phone = phone;
-      if (address !== undefined) updateData.address = address;
+      if (city !== undefined) updateData.city = city;
       if (dateOfBirth !== undefined) updateData.dateOfBirth = dateOfBirth;
       if (gender !== undefined) updateData.gender = gender;
 
@@ -91,6 +91,22 @@ class UserControllers {
       );
     } catch (err) {
       console.error("Error occurred in updateUser: ", err);
+      return errorResponse(res, "Internal Server Error", 500);
+    }
+  };
+
+  getUserById = async (req, res) => {
+    try {
+      const userId = req.params.id;
+      const user = await db.Users.findByPk(userId, {
+        attributes: { exclude: ["password"] },
+      });
+      if (!user) {
+        return errorResponse(res, "User not found", 404);
+      }
+      return successResponse(res, user, "Successfully found user", 200);
+    } catch (err) {
+      console.error("Error occurred in getUserById: ", err);
       return errorResponse(res, "Internal Server Error", 500);
     }
   };

@@ -74,7 +74,8 @@ module.exports = (sequelize, DataTypes) => {
     {
       sequelize,
       modelName: "FlashcardCards",
-      tableName: "FlashcardCards"
+      tableName: "flashcardcards",
+      underscored: false
     }
   );
   return FlashcardCards;
